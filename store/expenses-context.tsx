@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer } from 'react';
 
 import { Expense } from '../components/ExpensesOutput/types';
 
@@ -19,9 +19,9 @@ const DUMMY_EXPENSES: Expense[] = [
 
 export const ExpensesContext = createContext<ExpensesContextType>({
   expenses: [],
-  addExpense: (expense) => {},
-  deleteExpense: (id) => {},
-  updateExpense: (id, expense) => {}
+  addExpense: () => {},
+  deleteExpense: () => {},
+  updateExpense: () => {}
 });
 
 export const useExpensesContext = () => {
@@ -35,8 +35,10 @@ export const useExpensesContext = () => {
 function expensesReducer(state: ExpensesState, action: ActionType) {
   switch (action.type) {
     case 'ADD':
-      const id = new Date().toString() + Math.random().toString();
-      return [{ ...action.payload, id }, ...state];
+      return [
+        { ...action.payload, id: new Date().toString() + Math.random().toString() },
+        ...state
+      ];
     case 'UPDATE':
       return state.map((expense) =>
         expense.id === action.payload.id ? { ...expense, ...action.payload.data } : expense

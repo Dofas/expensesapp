@@ -7,7 +7,6 @@ import IconButton from '../../components/ui/IconButton/IconButton';
 import { GlobalStyles } from '../../constants/styles';
 import AllExpenses from '../../screens/AllExpenses';
 import RecentExpenses from '../../screens/RecentExpenses';
-import { StackNavigatorNavigationProp } from '../StackNavigator/StackNavigator.types';
 
 import { BottomTabsParamList } from './BottomTabsNavigator.types';
 
@@ -16,7 +15,7 @@ const BottomTabs = createBottomTabNavigator<BottomTabsParamList>();
 const BottomsTabsNavigator = () => {
   return (
     <BottomTabs.Navigator
-      screenOptions={({ navigation }: { navigation: StackNavigatorNavigationProp }) => {
+      screenOptions={({ navigation }) => {
         return {
           headerStyle: { backgroundColor: GlobalStyles.colors.primary500 },
           headerTintColor: GlobalStyles.colors.white,

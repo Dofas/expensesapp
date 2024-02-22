@@ -9,17 +9,10 @@ import {
   ExpensesState
 } from './expense-context.types';
 
-const DUMMY_EXPENSES: Expense[] = [
-  { id: '1', description: 'A Pair of shoes', amount: 59.99, date: new Date('2021-10-2') },
-  { id: '2', description: 'A Pair of trousers', amount: 40.59, date: new Date('2021-11-11') },
-  { id: '3', description: 'Banana', amount: 10, date: new Date('2021-05-05') },
-  { id: '4', description: 'Orange', amount: 12.9, date: new Date('2021-04-04') },
-  { id: '5', description: 'Book', amount: 99.99, date: new Date('2024-02-14') }
-];
-
 export const ExpensesContext = createContext<ExpensesContextType>({
   expenses: [],
   addExpense: () => {},
+  setExpenses: () => {},
   deleteExpense: () => {},
   updateExpense: () => {}
 });
@@ -35,10 +28,9 @@ export const useExpensesContext = () => {
 function expensesReducer(state: ExpensesState, action: ActionType) {
   switch (action.type) {
     case 'ADD':
-      return [
-        { ...action.payload, id: new Date().toString() + Math.random().toString() },
-        ...state
-      ];
+      return [{ ...action.payload }, ...state];
+    case 'SET':
+      return action.payload.reverse();
     case 'UPDATE':
       return state.map((expense) =>
         expense.id === action.payload.id ? { ...expense, ...action.payload.data } : expense
@@ -51,10 +43,14 @@ function expensesReducer(state: ExpensesState, action: ActionType) {
 }
 
 export const ExpensesContextProvider = ({ children }: ExpensesContextProviderProps) => {
-  const [expensesState, dispatch] = useReducer(expensesReducer, DUMMY_EXPENSES);
+  const [expensesState, dispatch] = useReducer(expensesReducer, []);
 
   function addExpense(expense: Expense) {
     dispatch({ type: 'ADD', payload: expense });
+  }
+
+  function setExpenses(expenses: Expense[]) {
+    dispatch({ type: 'SET', payload: expenses });
   }
 
   function deleteExpense(expenseId: string) {
@@ -68,6 +64,7 @@ export const ExpensesContextProvider = ({ children }: ExpensesContextProviderPro
   const value = {
     expenses: expensesState,
     addExpense,
+    setExpenses,
     deleteExpense,
     updateExpense
   };

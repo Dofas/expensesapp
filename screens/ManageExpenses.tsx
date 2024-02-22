@@ -1,18 +1,29 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { AxiosError } from 'axios';
 import { StyleSheet, View } from 'react-native';
 
 import { Expense } from '../components/ExpensesOutput/types';
 import ExpenseForm from '../components/ManageExpense/ExpenseForm';
+import ErrorOverlay from '../components/ui/ErrorOverlay/ErrorOverlay';
 import IconButton from '../components/ui/IconButton/IconButton';
+import LoadingOverlay from '../components/ui/LoadingOverlay/LoadingOverlay';
 import { GlobalStyles } from '../constants/styles';
 import { BottomTabsNavigationProp } from '../routes/BottomTabsNavigator/BottomTabsNavigator.types';
 import { ManageExpensesRouteProp } from '../routes/StackNavigator/StackNavigator.types';
+import { deleteExpense, storeExpense, updateExpense } from '../services/http';
 import { useExpensesContext } from '../store/expenses-context';
 
 const ManageExpenses = () => {
-  const { deleteExpense, updateExpense, addExpense, expenses } = useExpensesContext();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const {
+    deleteExpense: deleteContextExpense,
+    updateExpense: updateContextExpense,
+    addExpense,
+    expenses
+  } = useExpensesContext();
   const { params } = useRoute<ManageExpensesRouteProp>();
   const { setOptions, goBack } = useNavigation<BottomTabsNavigationProp>();
   const isEditing = !!params?.id;
@@ -25,22 +36,57 @@ const ManageExpenses = () => {
     });
   }, [setOptions, isEditing]);
 
-  function deleteExpenseItemHandler() {
-    deleteExpense(params.id);
-    goBack();
+  async function deleteExpenseItemHandler() {
+    setIsLoading(true);
+    try {
+      await deleteExpense(params.id);
+      deleteContextExpense(params.id);
+      goBack();
+    } catch (error) {
+      let errorMessage = 'Could not delete expense';
+      if (error instanceof AxiosError) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+      setIsLoading(false);
+    }
   }
 
   function cancelHandler() {
     goBack();
   }
 
-  function confirmHandler(expense: Omit<Expense, 'id'>) {
-    if (isEditing) {
-      updateExpense(params.id, expense);
-    } else {
-      addExpense(expense);
+  async function confirmHandler(expense: Omit<Expense, 'id'>) {
+    setIsLoading(true);
+    try {
+      if (isEditing) {
+        updateContextExpense(params.id, expense);
+        await updateExpense(params.id, expense);
+      } else {
+        const id = await storeExpense(expense);
+        addExpense({ ...expense, id: id });
+      }
+      goBack();
+    } catch (error) {
+      let errorMessage = 'Could not update expense';
+      if (error instanceof AxiosError) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+      setIsLoading(false);
     }
-    goBack();
+  }
+
+  const errorHandler = () => {
+    setError('');
+  };
+
+  if (isLoading) {
+    return <LoadingOverlay />;
+  }
+
+  if (error.length > 0) {
+    return <ErrorOverlay message={error} onConfirm={errorHandler} />;
   }
 
   return (
